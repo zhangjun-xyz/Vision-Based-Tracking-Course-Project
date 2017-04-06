@@ -60,9 +60,13 @@ nsamples = 100;
 %prior distribution will be gaussian
 priorsigmax = 10;
 priorsigmay = 10;
+priorsigmavx = 1;
+priorsigmavy = 1;
 %generate particles from prior distribution
 sampx = x0 + priorsigmax*randn(1,nsamples);
 sampy = y0 + priorsigmay*randn(1,nsamples);
+sampvx = priorsigmavx*randn(1,nsamples);
+sampvy = priorsigmavy*randn(1,nsamples);
 weights = ones(1,nsamples)/nsamples;
 %plot particles
 figure(1); imagesc(imrgb); hold on
@@ -71,9 +75,11 @@ hold off; drawnow;
 
 %now start tracking
 deltaframe = 2;  %set to 1 for every frame
+% just a guess of sample time
+dt = 0.03;
 for fnum = (fstart+deltaframe): deltaframe : fend
     %get image frame and draw it
-    fname = genfilename(sequence,fnum)
+    fname = genfilename(sequence,fnum);
     imrgb = imread(fname);
     figure(1); imagesc(imrgb);
     %find all boxes in frame number fnum
@@ -87,8 +93,8 @@ for fnum = (fstart+deltaframe): deltaframe : fend
     %to use constant velocity.
     motpredsigmax = 10;
     motpredsigmay = 10;
-    predx = sampx + motpredsigmax*randn(1,nsamples);
-    predy = sampy + motpredsigmay*randn(1,nsamples);
+    predx = sampx + sampvx*dt + motpredsigmax*randn(1,nsamples);
+    predy = sampy + sampvy*dt + motpredsigmay*randn(1,nsamples);
     
     %compute weights based on likelihood
     %recall weights should be oldweight * likelihood
@@ -116,7 +122,7 @@ for fnum = (fstart+deltaframe): deltaframe : fend
             p = exp(- 0.5 *(dx^2 / obssigmax^2 + dy^2 / obssigmay^2));
             prob = prob + p;      
         end   
-        weights(i) = prob
+        weights(i) = prob;
     end
     
     %resample particles according to likelihood weights
@@ -131,9 +137,3 @@ for fnum = (fstart+deltaframe): deltaframe : fend
     drawnow
     
 end
-
-
-
-
-
-
