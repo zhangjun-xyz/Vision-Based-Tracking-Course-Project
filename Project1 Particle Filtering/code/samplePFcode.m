@@ -55,6 +55,11 @@ drawnow
 %you want to track
 [x0,y0] = ginput(1);
 
+dist2 = @(x,y) sum((x-y).^2, 2);
+% determine the object identifier of the selected person
+[~, minIdx] = min(dist2(repmat([x0, y0], length(inds), 1), allboxes(inds, 3:4)));
+objId = allboxes(inds(minIdx), 2);
+
 %number of particles for particle filtering
 nsamples = 100;
 %prior distribution will be gaussian
@@ -84,7 +89,11 @@ for fnum = (fstart+deltaframe): deltaframe : fend
     figure(1); imagesc(imrgb);
     %find all boxes in frame number fnum
     inds = find(allboxes(:,1)==fnum);
-    
+    idx = inds(find(allboxes(inds, 2) == objId));
+    if length(idx) == 0
+        disp('tracking lost...');
+        return;
+    end
     %do motion prediction step of Bayes filtering 
     %we will use a deterministic motion model plus
     %additive gaussian noise.
@@ -114,8 +123,8 @@ for fnum = (fstart+deltaframe): deltaframe : fend
     for i=1:nsamples
         prob = 0;
         x = predx(i); y=predy(i);
-        for iii=1:length(inds)
-            box = allboxes(inds(iii),:);
+        for iii=1:length(idx)
+            box = allboxes(idx(iii),:);
             midx = box(3);  %centroid of box
             midy = box(4);
             dx = midx-x; dy = midy-y;
