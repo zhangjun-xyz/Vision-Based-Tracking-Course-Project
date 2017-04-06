@@ -115,6 +115,11 @@ for fnum = (fstart+deltaframe): deltaframe : fend
     %a semiparametric, multimodal distribtion
     obssigmax = 5;
     obssigmay = 5;
+    
+    % Add false positives
+    fpNum = 400;
+    fpX = randn(fpNum,1) * size(imrgb, 1);
+    fpY = randn(fpNum,1) * size(imrgb, 2);
 
     %there surely must be a more efficient way to do the
     %following as a vectorized computation rather than
@@ -127,10 +132,20 @@ for fnum = (fstart+deltaframe): deltaframe : fend
             box = allboxes(idx(iii),:);
             midx = box(3);  %centroid of box
             midy = box(4);
+            % add noises
+            midx = midx + randn*obssigmax;
+            midy = midy + randn*obssigmay;
             dx = midx-x; dy = midy-y;
             p = exp(- 0.5 *(dx^2 / obssigmax^2 + dy^2 / obssigmay^2));
             prob = prob + p;      
-        end   
+        end
+        for iii = 1:fpNum
+            midx = fpX(iii);  %centroid of box
+            midy = fpY(iii);
+            dx = midx-x; dy = midy-y;
+            p = exp(- 0.5 *(dx^2 / obssigmax^2 + dy^2 / obssigmay^2));
+            prob = prob + p;
+        end
         weights(i) = prob;
     end
     
